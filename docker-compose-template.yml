@@ -1,0 +1,14 @@
+version: "3.6"
+services:
+  mychatgpt:
+    build: .
+    restart: unless-stopped
+    environment:
+      - OPENAI_API_KEY=[OPENAI_KEY] # OpenAI API Key
+      - SSL_ENABLED=1 # Enable SSL
+      - SSL_SELF_SIGNED=1 # Use self-signed cert or specify the cert.pem and key.pem below
+    ports:
+      - "443:5000"
+    volumes:
+      - $PWD/ssl/key.pem:/usr/src/app/ssl/key.pem:ro,z
+      - $PWD/ssl/cert.pem:/usr/src/app/ssl/cert.pem:ro,z
