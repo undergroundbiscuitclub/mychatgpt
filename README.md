@@ -9,9 +9,9 @@
            |___/                                         
 ```
 
-A chatGPT generated chatGPT using OpenAI API, Python and Flask.
+A chatGPT generated python version of chatGPT using OpenAI API, Python and Flask.
 
-Disclaimer: The code is 90% written by the LLM therefore it is likely to contail bugs or injection vulnerabilities. Use at your own risk.
+Disclaimer: The code is 80% written by the LLM therefore it is likely to contain bugs or injection vulnerabilities. Use at your own risk.
 
 # Features
 - Git-like markdown rendering
@@ -19,6 +19,11 @@ Disclaimer: The code is 90% written by the LLM therefore it is likely to contail
 - Model selection
 - Retained session messages 
 - Clear button to start a new session
+
+# To-Do
+- Voice to text
+- Multiple chats per session
+- Login/Authentication
 
 # Usage
 Use with Docker using the Dockerfile or with docker-compose. A template is provided.
