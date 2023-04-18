@@ -11,7 +11,7 @@
 
 A chatGPT generated chatGPT using OpenAI API, Python and Flask.
 
-Disclaimer: The code is 90% written by the LLM therefore this is likely to be bugs or injection vulnerabilities. Use at your own risk.
+Disclaimer: The code is 90% written by the LLM therefore it is likely to contain bugs or injection vulnerabilities. Use at your own risk.
 
 # Usage
 Use with Docker using the Dockerfile or with docker-compose. A template is provided.
