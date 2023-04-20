@@ -19,9 +19,9 @@ Disclaimer: The code is 80% written by the LLM therefore it is likely to contain
 - Model selection
 - Retained session messages 
 - Clear button to start a new session
+- *NEW* Voice to text using Web Speech API built into your browser! Activate speech by using the microphone button or by using the `v` key. Recognition stops automatically or by using the `v` key.
 
 # To-Do
-- Voice to text
 - Multiple chats per session
 - Login/Authentication
 

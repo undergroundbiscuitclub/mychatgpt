@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static',filename='markdown.css') }}">
     <link rel="stylesheet" href="{{ url_for('static',filename='main.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container-fluid px-0 mt-5 h-100" id="main-container">
@@ -27,6 +27,7 @@
                 <div class="col-12 col-md-auto mt-2 mt-md-0">
                     <button title="Send" type="submit" class="btn btn-primary mr-2"><i class="fa fa-paper-plane"></i></button>
                     <button title="Clear messages" id="clear-button" type="button" class="btn btn-primary mr-2"><i class="fa fa-trash"></i></button>
+                    <button title="Voice" id="voice-button" type="button" class="btn btn-primary mr-2 speak-disabled"><i id="voice_status" class="fa fa-microphone-slash"></i></button>
                     <button title="Text-to-Speech" id="speak-button" type="button" class="btn btn-primary mr-2 speak-disabled"><i id="speak_status" class="fa fa-volume-xmark"></i></button>
                     <select id="gpt-version-selector" class="custom-select mr-2">
                         <option value="gpt-3.5-turbo" selected="">GPT-3.5</option>
@@ -37,9 +38,27 @@
         </form>
     </div>
     <script>
-        const md = window.markdownit();
-        speak = false;
 
+        // Setup Voice
+        var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
+        var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent
+        var recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-GB';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 200;
+
+        // Setup Vars
+        var voice = false;
+        var speak = false;
+        const md = window.markdownit();
+
+        // Helper Script
+        function toggleClasses(element, class1, class2) {
+            $(element).toggleClass(class1).toggleClass(class2);
+        }
+
+        // On Send button
         $("#chat-form").on("submit", function(e) {
             e.preventDefault();
             const prompt = $("#prompt").val();
@@ -47,6 +66,7 @@
             $("#prompt").val("");
         });
 
+        // On Enter Key within Prompt
         $("#prompt").on("keydown", function(e) {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -54,6 +74,15 @@
             }
         });
 
+        // Start voice on "v" key
+        $("body").on("keydown", function(e) {
+            if (e.key === "v") {
+                e.preventDefault();
+                voiceStart();
+            }
+        });
+
+        $('#voice-button').click(voiceStart);
 
         $('#speak-button').click(toggleSpeak);
 
@@ -83,31 +112,38 @@
             }
         });
 
+        // Voice to text function
+        function voiceStart(){
+            if(voice){
+                recognition.stop();
+                console.log('Stop');
+                $('#voice-button').toggleClass('speak-disabled');
+                toggleClasses('#voice_status', 'fas fa-microphone', 'fas fa-microphone-slash');
+                voice = false;
+            }else{
+                recognition.start();
+                console.log('Start');
+                $('#voice-button').toggleClass('speak-disabled');
+                toggleClasses('#voice_status', 'fas fa-microphone', 'fas fa-microphone-slash');
+                voice = true;
+            }
+        }
+
+        // TTS function
         function toggleSpeak() {
             speak = !speak;
-
-            // Helper function to toggle classes
-            function toggleClasses(element, class1, class2) {
-                $(element).toggleClass(class1).toggleClass(class2);
-            }
-
-            // Toggle classes for the speak-button and speak_status elements
             $('#speak-button').toggleClass('speak-disabled');
             toggleClasses('#speak_status', 'fas fa-volume-high', 'fas fa-volume-xmark');
         }
 
         function sendMessage(message) {
             appendMessage(message, "user-message");
-
-            // Read the selected GPT version from the dropdown
             const gptVersion = $("#gpt-version-selector").val();
-
-            // Pass the selected GPT version to the server
             $.post("/generate-response", {prompt: message, gpt_version: gptVersion}, function(data) {
                 appendMessage(data, "gpt-message");
             });
         }
-
+        
         function say(m) {
             var msg = new SpeechSynthesisUtterance();
             var voices = window.speechSynthesis.getVoices();
@@ -132,9 +168,7 @@
             const renderedMessage = md.render(message);
             const textElement = $("<div>").html(renderedMessage);
             const messageElement = $("<div>").addClass("message " + cssClass);
-
             const messageRow = $("<div>").addClass("message-row");
-
             if (cssClass === "gpt-message") {
                 const iconElement = $("<i>").addClass("fas fa-brain");
                 const iconContainer = $("<div>").addClass("icon-container").append(iconElement);
@@ -145,7 +179,6 @@
             } else {
                 messageRow.addClass("user-row");
             }
-
             messageElement.append(textElement);
             messageRow.append(messageElement);
             $("#chat-container").append(messageRow);
@@ -155,13 +188,34 @@
         function sanitizeMarkdown(markdownText) {
             var sanitizedText = markdownText.replace(/[^\w\s]/gi, '');
             sanitizedText = sanitizedText.replace(/(<([^>]+)>)/gi, '');
-
             sanitizedText = sanitizedText.replace(/\*\*(.+?)\*\*/gi, '$1');
             sanitizedText = sanitizedText.replace(/__(.+?)__/gi, '$1');
             sanitizedText = sanitizedText.replace(/\*(.+?)\*/gi, '$1');
             sanitizedText = sanitizedText.replace(/_(.+?)_/gi, '$1');
-
             return sanitizedText;
+        }
+
+        recognition.onresult = function(event) {
+            var result = event.results[0][0].transcript;
+            console.log('Result received: ' + result + '.');
+            console.log('Confidence: ' + event.results[0][0].confidence);
+            sendMessage(result);
+            $("#prompt").val("");
+        }
+
+        recognition.onspeechend = function() {
+            recognition.stop();
+            $('#voice-button').toggleClass('speak-disabled');
+            toggleClasses('#voice_status', 'fas fa-microphone', 'fas fa-microphone-slash');
+            voice = false;
+        }
+
+        recognition.onnomatch = function(event) {
+            console.log("I didn't recognise that color.");
+        }
+
+        recognition.onerror = function(event) {
+            console.log('Error occurred in recognition: ' + event.error);
         }
     </script>
 </body>
