@@ -74,9 +74,9 @@
             }
         });
 
-        // Start voice on "v" key
+        // Start voice on alt + "v" key
         $("body").on("keydown", function(e) {
-            if (e.key === "v") {
+            if (e.key === "v" && e.altKey) {
                 e.preventDefault();
                 voiceStart();
             }
